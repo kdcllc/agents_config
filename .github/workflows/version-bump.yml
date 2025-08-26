@@ -1,0 +1,154 @@
+name: Version Bump and Tag
+
+on:
+  push:
+    branches: [master]
+    # Only trigger when changes are merged via PR
+  pull_request:
+    branches: [master]
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  version-bump:
+    # Only run on PR merge to master, not on direct pushes
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      new-version: ${{ steps.bump.outputs.new-version }}
+      version-changed: ${{ steps.bump.outputs.version-changed }}
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Configure git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Determine version bump type
+        id: bump-type
+        run: |
+          # Check PR labels to determine bump type
+          PR_LABELS="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          echo "PR Labels: $PR_LABELS"
+          
+          if echo "$PR_LABELS" | grep -q "major"; then
+            echo "bump-type=major" >> $GITHUB_OUTPUT
+            echo "Detected major version bump from labels"
+          elif echo "$PR_LABELS" | grep -q "minor"; then
+            echo "bump-type=minor" >> $GITHUB_OUTPUT
+            echo "Detected minor version bump from labels"
+          elif echo "$PR_LABELS" | grep -q "patch"; then
+            echo "bump-type=patch" >> $GITHUB_OUTPUT
+            echo "Detected patch version bump from labels"
+          else
+            # Default to patch for regular PRs
+            echo "bump-type=patch" >> $GITHUB_OUTPUT
+            echo "Defaulting to patch version bump"
+          fi
+
+      - name: Bump version
+        id: bump
+        run: |
+          BUMP_TYPE="${{ steps.bump-type.outputs.bump-type }}"
+          
+          # Read current version from pyproject.toml
+          CURRENT_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Parse version components
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+          
+          # Bump version based on type
+          case $BUMP_TYPE in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New version: $NEW_VERSION"
+          
+          # Update pyproject.toml
+          sed -i "s/version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
+          
+          # Verify the change
+          UPDATED_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "Updated version in file: $UPDATED_VERSION"
+          
+          if [ "$UPDATED_VERSION" = "$NEW_VERSION" ]; then
+            echo "new-version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "version-changed=true" >> $GITHUB_OUTPUT
+            
+            # Update CHANGELOG.md
+            TODAY=$(date +%Y-%m-%d)
+            
+            # Replace [Unreleased] with new version
+            sed -i "s/## \[Unreleased\]/## [Unreleased]\n\n## [$NEW_VERSION] - $TODAY/" CHANGELOG.md
+            
+            # Update version links at the bottom
+            sed -i "s/\[Unreleased\]: .*/[Unreleased]: https:\/\/github.com\/kdcllc\/agents_config\/compare\/v$NEW_VERSION...HEAD\n[$NEW_VERSION]: https:\/\/github.com\/kdcllc\/agents_config\/compare\/v$CURRENT_VERSION...v$NEW_VERSION/" CHANGELOG.md
+            
+            echo "Version successfully updated to $NEW_VERSION"
+          else
+            echo "version-changed=false" >> $GITHUB_OUTPUT
+            echo "Failed to update version"
+            exit 1
+          fi
+
+      - name: Commit version bump
+        if: steps.bump.outputs.version-changed == 'true'
+        run: |
+          NEW_VERSION="${{ steps.bump.outputs.new-version }}"
+          git add pyproject.toml CHANGELOG.md
+          git commit -m "chore: bump version to $NEW_VERSION
+
+          Auto-generated version bump after PR merge
+          - Updated pyproject.toml version
+          - Updated CHANGELOG.md with release date
+          
+          [skip ci]"
+
+      - name: Create and push tag
+        if: steps.bump.outputs.version-changed == 'true'
+        run: |
+          NEW_VERSION="${{ steps.bump.outputs.new-version }}"
+          git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
+          git push origin master
+          git push origin "v$NEW_VERSION"
+          echo "Created and pushed tag v$NEW_VERSION"
+
+      - name: Summary
+        if: steps.bump.outputs.version-changed == 'true'
+        run: |
+          NEW_VERSION="${{ steps.bump.outputs.new-version }}"
+          echo "🎉 Successfully created version $NEW_VERSION"
+          echo "📦 Tag v$NEW_VERSION has been pushed"
+          echo "🚀 Release and publish workflows will now be triggered"

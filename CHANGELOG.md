@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Automated version bumping and tagging workflow on PR merge to master
+- Enhanced CI/CD pipeline with proper workflow orchestration
+- Support for semantic version bumping based on PR labels (major, minor, patch)
+
+### Changed
+- CI workflow now only triggers on PRs to master and manual dispatch
+- Release workflow now triggers publish workflow automatically
+- Improved workflow dependencies and execution order
+
 ## [0.2.0] - 2025-08-26
 
 ### Changed
