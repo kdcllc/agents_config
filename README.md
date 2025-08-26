@@ -366,13 +366,15 @@ agents-config/
 │ │ ├── config_models.py # Common configuration models
 │ │ ├── model_config.py # AI model configuration
 │ │ └── tool_config.py # Tool configuration models
-│ └── ai-config/ # Example configuration
+│ └── ai-config/ # Example configuration (NOT distributed)
 │ ├── ai-config.yaml # Main configuration file
 │ ├── prompts/ # System prompt templates
 │ └── tools/ # Tool schema definitions
 ├── main.py # Demo script
 ├── pyproject.toml # Project configuration
 └── README.md # This file
+
+**Note**: The `ai-config/` folder contains example configurations for development and testing purposes only. It is **not included** in the distributed package. Users should create their own configuration files based on these examples.
 
 ````text
 

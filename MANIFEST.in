@@ -1,10 +1,10 @@
 include README.md
 include LICENSE
 include pyproject.toml
-recursive-include app *.py
-recursive-include app/ai-config *.yaml *.yml *.json *.md
+recursive-include app/agents_config *.py
 recursive-exclude app __pycache__
 recursive-exclude app *.py[co]
+recursive-exclude app/ai-config *
 global-exclude *.pyc
 global-exclude *.pyo
 global-exclude *~

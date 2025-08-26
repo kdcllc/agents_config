@@ -46,6 +46,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["app"]
+include = ["agents_config*"]
+exclude = ["ai-config*"]
 
 [tool.black]
 line-length = 150

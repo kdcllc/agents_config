@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI workflow now only triggers on PRs to master and manual dispatch
 - Release workflow now triggers publish workflow automatically
 - Improved workflow dependencies and execution order
+- **IMPORTANT**: Excluded `ai-config/` folder from package distribution - it's now examples-only
 
 ## [0.2.0] - 2025-08-26
 
