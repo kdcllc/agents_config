@@ -1,0 +1,162 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Opoint Search API",
+    "version": "1.0.0",
+    "description": "Search for news articles using Opoint's flexible search syntax and filters."
+  },
+  "servers": [
+    {
+      "url": "https://api.opoint.com"
+    }
+  ],
+  "paths": {
+    "/search/": {
+      "post": {
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "description": "Response format. Use 'application/json'.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "application/json"
+              ]
+            }
+          }
+        ],
+        "summary": "Search for articles",
+        "description": "Search for articles using a search string and optional parameters. Requires Authorization header: Token {yourtoken}.",
+        "operationId": "searchArticles",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "searchterm": {
+                    "type": "string",
+                    "description": "Search string using Opoint syntax (keywords, filters, boolean ops, etc.)",
+                    "example": "spotify AND football AND lang:en"
+                  },
+                  "params": {
+                    "type": "object",
+                    "properties": {
+                      "requestedarticles": {
+                        "type": "integer",
+                        "description": "Number of articles to return.",
+                        "example": 10
+                      },
+                      "main": {
+                        "type": "object",
+                        "properties": {
+                          "header": {
+                            "type": "integer",
+                            "enum": [
+                              0,
+                              1
+                            ],
+                            "description": "Include article header/title.",
+                            "example": 1
+                          },
+                          "summary": {
+                            "type": "integer",
+                            "enum": [
+                              0,
+                              1
+                            ],
+                            "description": "Include article summary/lede.",
+                            "example": 1
+                          },
+                          "text": {
+                            "type": "integer",
+                            "enum": [
+                              0,
+                              1
+                            ],
+                            "description": "Include article body text.",
+                            "example": 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "searchterm"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "articles": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "header": {
+                            "type": "string"
+                          },
+                          "summary": {
+                            "type": "string"
+                          },
+                          "text": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "published": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "Total number of matching articles"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid search syntax or parameters)"
+          },
+          "401": {
+            "description": "Unauthorized (missing or invalid token)"
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Use 'Token {yourtoken}'"
+      }
+    }
+  }
+}
