@@ -2,7 +2,7 @@
 Agent configuration classes.
 """
 
-from typing import Any, List, Optional, Union, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic.types import PositiveFloat, PositiveInt
@@ -11,6 +11,7 @@ from .base import EnvSubstitutionMixin
 
 if TYPE_CHECKING:
     from .tool_config import OpenAPIToolConfig, AIFoundryToolConfig
+    from .model_config import ModelConfig
 
 
 class SystemPromptConfig(BaseModel, EnvSubstitutionMixin):
@@ -34,44 +35,13 @@ class SystemPromptConfig(BaseModel, EnvSubstitutionMixin):
         return v
 
 
-class AgentModelConfig(BaseModel, EnvSubstitutionMixin):
-    """Configuration for agent model settings."""
-
-    name: str = Field(..., description="Model name reference")
-    temperature: Optional[PositiveFloat] = Field(None, description="Override temperature")
-    max_tokens: Optional[PositiveInt] = Field(None, description="Override max tokens")
-    top_p: Optional[PositiveFloat] = Field(None, description="Override top_p")
-
-    @model_validator(mode="before")
-    @classmethod
-    def substitute_environment_variables(cls, values: Any) -> Any:
-        """Substitute environment variables in all string fields."""
-        return cls.substitute_env_vars(values)
-
-    @field_validator("temperature")
-    @classmethod
-    def validate_temperature(cls, v: Optional[float]) -> Optional[float]:
-        """Validate temperature range."""
-        if v is not None and not 0 <= v <= 2:
-            raise ValueError("Temperature must be between 0 and 2")
-        return v
-
-    @field_validator("top_p")
-    @classmethod
-    def validate_top_p(cls, v: Optional[float]) -> Optional[float]:
-        """Validate top_p range."""
-        if v is not None and not 0 <= v <= 1:
-            raise ValueError("top_p must be between 0 and 1")
-        return v
-
-
 class AgentConfig(BaseModel, EnvSubstitutionMixin):
     """Configuration for AI agents."""
 
     version: str = Field(..., description="Agent version")
     name: str = Field(..., description="Agent name")
     description: str = Field(..., description="Agent description")
-    model: AgentModelConfig = Field(..., description="Model configuration")
+    model: Union[str, "ModelConfig"] = Field(..., description="Model reference or configuration")
     tools: List[Union["OpenAPIToolConfig", "AIFoundryToolConfig"]] = Field(
         default_factory=list, 
         description="List of tool configuration objects"
@@ -109,6 +79,18 @@ class AgentConfig(BaseModel, EnvSubstitutionMixin):
         return validated_tools
 
     @model_validator(mode="after")
+    def validate_model_reference(self) -> "AgentConfig":
+        """Validate that model is properly resolved."""
+        from .model_config import ModelConfig
+        
+        if isinstance(self.model, str):
+            raise ValueError(f"Model reference '{self.model}' was not resolved to a ModelConfig object")
+        elif not isinstance(self.model, ModelConfig):
+            raise ValueError(f"Model must be a ModelConfig object, got {type(self.model)}")
+            
+        return self
+
+    @model_validator(mode="after")
     def convert_tools_to_objects(self) -> "AgentConfig":
         """Convert tool references and dictionaries to actual tool configuration objects."""
         from .tool_config import OpenAPIToolConfig, AIFoundryToolConfig
@@ -134,6 +116,60 @@ class AgentConfig(BaseModel, EnvSubstitutionMixin):
                 
         self.tools = converted_tools
         return self
+
+    def get_resolved_model(self) -> "ModelConfig":
+        """
+        Get the resolved model configuration for this agent.
+        
+        Returns:
+            The ModelConfig object for this agent
+        """
+        from .model_config import ModelConfig
+        
+        if not isinstance(self.model, ModelConfig):
+            raise ValueError(f"Model is not resolved. Expected ModelConfig, got {type(self.model)}")
+        
+        return self.model
+
+    def get_model_provider(self) -> str:
+        """
+        Get the model provider from the resolved model configuration.
+        
+        Returns:
+            The provider string (e.g., "azure_openai")
+        """
+        model_config = self.get_resolved_model()
+        return model_config.provider
+
+    def get_model_id(self) -> str:
+        """
+        Get the model ID from the resolved model configuration.
+        
+        Returns:
+            The model ID string (e.g., "gpt-4-turbo")
+        """
+        model_config = self.get_resolved_model()
+        return model_config.id
+
+    def get_model_config(self) -> Dict[str, Any]:
+        """
+        Get the model configuration dictionary.
+        
+        Returns:
+            The model config dictionary with API keys, endpoints, etc.
+        """
+        model_config = self.get_resolved_model()
+        return model_config.config
+
+    def get_model_params(self) -> Dict[str, Any]:
+        """
+        Get the model parameters dictionary.
+        
+        Returns:
+            The model params dictionary with temperature, max_tokens, etc.
+        """
+        model_config = self.get_resolved_model()
+        return model_config.params if model_config.params else {}
 
     def get_resolved_tools(self) -> List[Union["OpenAPIToolConfig", "AIFoundryToolConfig"]]:
         """

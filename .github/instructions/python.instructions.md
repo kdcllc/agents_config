@@ -12,6 +12,7 @@ applyTo: '**/*.py'
 - Provide docstrings following PEP 257 conventions.
 - Use the `typing` module for type annotations (e.g., `List[str]`, `Dict[str, int]`).
 - Break down complex functions into smaller, more manageable functions.
+- For all commands use `uv run` instead of `python` or `python3`.
 
 ## General Instructions
 

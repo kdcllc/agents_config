@@ -20,7 +20,7 @@ tools:
 
   # OpenAPI tools
   openapi:
-    opoint:
+    opoint_api:
       schema_path: tools/openapi/opoint.schema.json
       version: '1.0'
       headers:
@@ -50,57 +50,44 @@ tools:
           - ${env:OPOINT_API_CONNECTION_ID}
         config:
             project_endpoint: ${ref:tools.ai_foundry.default_project_endpoint}
-      
-      search:
-        version: '1.0'
-        description: Combined search tool using both Bing and Opoint API via Azure AI Foundry agent connections
-        connection_ids:
-          - ${env:BING_SEARCH_CONNECTION_ID}
-          - ${env:OPOINT_API_CONNECTION_ID}
-        config:
-            project_endpoint: ${ref:tools.ai_foundry.default_project_endpoint}
-
+ 
 # agents configuration
 agents:
+
+
+  ai_foundry_opoint-agent:
+    version: '1.0'
+    name: ai_foundry_opoint-agent
+    description: AI agent specialized in searching company information using Opoint API via Azure AI Foundry
+    model: ${ref:models.standard-assistant}
+    tools:
+      - ${ref:tools.ai_foundry.tools.opoint_api}
+    platform: azure_ai_foundry
+    system_prompt:
+      version: '1.0'
+      path: prompts/opoint-agent.prompt.md
 
   sk-opoint-agent:
     version: '1.0'
     name: sk-opoint-agent
     description: AI agent specialized in searching company information using Opoint API
-    model:
-      name: standard-assistant
-      temperature: 0.7
+    model: ${ref:models.standard-assistant}
     tools:
-      - ${ref:tools.ai_foundry.tools.opoint_api}
-    platform: azure_openai
+      - ${ref:tools.openapi.opoint_api}
+    platform: semantic-kernel
     system_prompt:
       version: '1.0'
       path: prompts/opoint-agent.prompt.md
-
-  sk-search-agent:
+  
+  ai_foundry-search-agent:
     version: '1.0'
-    name: sk-search-agent
-    description: AI agent for performing web searches using Bing
-    model:
-      name: standard-assistant
-      temperature: 0.5
+    name: ai_foundry-search-agent
+    description: AI agent that combines web search and Opoint API and bing search.
+    model: ${ref:models.standard-assistant}
     tools:
+      - ${ref:tools.ai_foundry.tools.opoint_api}
       - ${ref:tools.ai_foundry.tools.bing_search}
-    platform: azure_openai
-    system_prompt:
-      version: '1.0'
-      path: prompts/search-agent.prompt.md
-
-  sk-combined-search-agent:
-    version: '1.0'
-    name: combined-search-agent
-    description: AI agent that combines web search and Opoint API for comprehensive information retrieval
-    model:
-      name: standard-assistant
-      temperature: 0.6
-    tools:
-      - ${ref:tools.ai_foundry.tools.search}
-    platform: azure_openai
+    platform: azure_ai_foundry
     system_prompt:
       version: '1.0'
       path: prompts/combined-search-agent.prompt.md

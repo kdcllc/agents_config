@@ -45,38 +45,8 @@ class AIConfig(BaseModel, EnvSubstitutionMixin):
     @model_validator(mode="after")
     def validate_cross_references(self) -> "AIConfig":
         """Validate cross-references between agents, models, and tools."""
-        models = self.models
-        tools_config = self.tools
-        agents = self.agents
-
-        # Extract available model names
-        available_models = set(models.keys()) if models else set()
-
-        # Extract available tool names from nested structure
-        available_tools: set[str] = set()
-        if tools_config.openapi:
-            available_tools.update(tools_config.openapi.keys())
-        if tools_config.ai_foundry and tools_config.ai_foundry.tools:
-            available_tools.update(tools_config.ai_foundry.tools.keys())
-
-        # Validate agent references
-        for agent_name, agent_config in agents.items():
-            # Check model reference
-            if agent_config.model and agent_config.model.name:
-                model_name = agent_config.model.name
-                if model_name not in available_models:
-                    raise ValueError(
-                        f"Agent '{agent_name}' references unknown model " f"'{model_name}'. Available models: " f"{sorted(available_models)}"
-                    )
-
-            # Check tool references - tools are now objects, so validation is different
-            if agent_config.tools:
-                for tool in agent_config.tools:
-                    # Tools are now actual configuration objects
-                    # Validation happens during tool object creation
-                    # We can add specific validation here if needed
-                    pass
-
+        # Cross-reference validation is now handled during reference resolution
+        # and within individual component validators
         return self
 
     def get_model(self, name: str) -> Optional[ModelConfig]:

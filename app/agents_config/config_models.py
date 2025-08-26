@@ -8,10 +8,13 @@ YAML files, with automatic environment variable resolution.
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
 
 from pydantic import BaseModel, Field, root_validator, validator
 from pydantic.types import PositiveFloat, PositiveInt
+
+if TYPE_CHECKING:
+    from .agent_config import AgentConfig
 
 
 class EnvSubstitutionMixin:
@@ -175,87 +178,18 @@ class SystemPromptConfig(BaseModel, EnvSubstitutionMixin):
         return v
 
 
-class AgentModelConfig(BaseModel, EnvSubstitutionMixin):
-    """Configuration for agent model settings."""
-
-    name: str = Field(..., description="Model name reference")
-    temperature: Optional[PositiveFloat] = Field(None, description="Override temperature")
-    max_tokens: Optional[PositiveInt] = Field(None, description="Override max tokens")
-    top_p: Optional[PositiveFloat] = Field(None, description="Override top_p")
-
-    @root_validator(pre=True)
-    def substitute_environment_variables(cls, values):
-        """Substitute environment variables in all string fields."""
-        return cls.substitute_env_vars(values)
-
-    @validator("temperature")
-    def validate_temperature(cls, v):
-        """Validate temperature range."""
-        if v is not None and not 0 <= v <= 2:
-            raise ValueError("Temperature must be between 0 and 2")
-        return v
-
-    @validator("top_p")
-    def validate_top_p(cls, v):
-        """Validate top_p range."""
-        if v is not None and not 0 <= v <= 1:
-            raise ValueError("top_p must be between 0 and 1")
-        return v
-
-
-class AgentConfig(BaseModel, EnvSubstitutionMixin):
-    """Configuration for AI agents."""
-
-    version: str = Field(..., description="Agent version")
-    name: str = Field(..., description="Agent name")
-    description: str = Field(..., description="Agent description")
-    model: AgentModelConfig = Field(..., description="Model configuration")
-    tools: List[str] = Field(default_factory=list, description="List of tool references")
-    platform: str = Field(..., description="Platform (e.g., azure_openai)")
-    system_prompt: SystemPromptConfig = Field(..., description="System prompt configuration")
-
-    @root_validator(pre=True)
-    def substitute_environment_variables(cls, values):
-        """Substitute environment variables in all string fields."""
-        return cls.substitute_env_vars(values)
-
-    @validator("tools")
-    def validate_tools(cls, v):
-        """Validate tool references format."""
-        for tool in v:
-            if not isinstance(tool, str):
-                raise ValueError("Tool references must be strings")
-            # Validate tool reference format (e.g., "ai_foundry.tools.bing")
-            if "." not in tool:
-                raise ValueError(f"Tool reference '{tool}' must be in format " "'category.subcategory.name'")
-        return v
-
-
 class AIConfig(BaseModel, EnvSubstitutionMixin):
     """Main AI configuration model."""
 
     version: str = Field(..., description="Configuration version")
     models: Dict[str, ModelConfig] = Field(default_factory=dict, description="Model configurations")
     tools: ToolsConfig = Field(default_factory=ToolsConfig, description="Tools configuration")
-    agents: Dict[str, AgentConfig] = Field(default_factory=dict, description="Agent configurations")
+    agents: Dict[str, "AgentConfig"] = Field(default_factory=dict, description="Agent configurations")
 
     @root_validator(pre=True)
     def substitute_environment_variables(cls, values):
         """Substitute environment variables in all string fields."""
         return cls.substitute_env_vars(values)
-
-    @validator("agents")
-    def validate_agent_model_references(cls, v, values):
-        """Validate that agent model references exist in models config."""
-        if "models" in values:
-            available_models = set(values["models"].keys())
-            for agent_name, agent_config in v.items():
-                model_name = agent_config.model.name
-                if model_name not in available_models:
-                    raise ValueError(
-                        f"Agent '{agent_name}' references unknown model " f"'{model_name}'. Available models: " f"{list(available_models)}"
-                    )
-        return v
 
     def validate_tool_references(self) -> None:
         """Validate that all agent tool references exist in tools config."""
@@ -454,7 +388,7 @@ def create_example_config() -> Dict[str, Any]:
                 "version": "1.0",
                 "name": "sk-search-agent",
                 "description": "AI agent for performing web searches using Bing",
-                "model": {"name": "standard-assistant", "temperature": 0.5},
+                "model": "${ref:models.standard-assistant}",
                 "tools": ["ai_foundry.tools.bing_search"],
                 "platform": "azure_openai",
                 "system_prompt": {

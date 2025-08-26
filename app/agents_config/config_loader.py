@@ -189,7 +189,7 @@ class ConfigLoader:
                     "version": "1.0",
                     "name": "Assistant",
                     "description": "General purpose AI assistant",
-                    "model": {"name": "gpt-4", "temperature": 0.7},
+                    "model": "${ref:models.gpt-4}",
                     "tools": ["openapi.weather", "ai_foundry.tools.bing"],
                     "platform": "azure_openai",
                     "system_prompt": {"version": "1.0", "path": "prompts/assistant.md"},
@@ -198,7 +198,7 @@ class ConfigLoader:
                     "version": "1.0",
                     "name": "Search Agent",
                     "description": "Specialized search agent",
-                    "model": {"name": "gpt-3.5-turbo", "temperature": 0.3},
+                    "model": "${ref:models.gpt-3.5-turbo}",
                     "tools": ["ai_foundry.tools.bing"],
                     "platform": "azure_openai",
                     "system_prompt": {
