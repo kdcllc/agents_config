@@ -2,7 +2,6 @@
 """
 Demo script showcasing the agents-config library functionality.
 
-This comprehensive demo demonstrates:
 - Loading configuration from YAML files (with fallback to simple config)
 - Creating configurations programmatically
 - Validating configurations and catching errors properly
@@ -80,8 +79,15 @@ def demo_load_existing_config() -> Optional[AIConfig]:
                     temp = agent.model.temperature
                     print(f"     Model: {model_name} (temp: {temp})")
                 if agent.tools:
-                    tools_str = ", ".join(agent.tools)
-                    print(f"     Tools: {tools_str}")
+                    for tool_ref in agent.tools:
+                        # Show the resolved tool information instead of just the reference
+                        tool_config = config.get_tool(tool_ref)
+                        if tool_config:
+                            print(f"     Tool: {tool_ref}")
+                            print(f"       Description: {tool_config.description}")
+                            print(f"       Type: {getattr(tool_config, 'type', 'N/A')}")
+                        else:
+                            print(f"     Tool: {tool_ref} (not found)")
             else:
                 print(f"   - {agent_name}: (agent not found)")
 
@@ -236,7 +242,7 @@ def demo_create_programmatic_config() -> Optional[AIConfig]:
                 "name": "Demo Agent",
                 "description": "A demonstration agent for testing",
                 "model": {"name": "demo-model", "temperature": 0.5},
-                "tools": ["openapi.demo-tool"],
+                "tools": ["${ref:tools.openapi.demo-tool}"],
                 "platform": "azure_openai",
                 "system_prompt": {"version": "1.0", "path": "prompts/demo-agent.md"},
             }
@@ -398,33 +404,29 @@ def demo_reference_resolution() -> None:
     # Create a config with internal references
     config_with_refs: Dict[str, Any] = {
         "version": "1.0",
-        "ai_foundry": {
-            "default_project_endpoint": "https://my-project.azure.ai",
-            "tools": {
-                "opoint_api": {
-                    "name": "opoint",
-                    "description": "Office Point API tool",
-                    "connection_id": "conn-123",
-                    "container_name": "opoint-container",
-                }
-            },
-        },
         "models": {
             "gpt-4": {
                 "provider": "azure_openai",
                 "id": "gpt-4",
-                "version": "1.0",  # Added required version field
+                "version": "1.0",
                 "config": {
-                    "api_key": "${env:AZURE_OPENAI_API_KEY}",
-                    "endpoint": "${env:AZURE_OPENAI_ENDPOINT}",
+                    "api_key": "test-key",
+                    "endpoint": "https://test.openai.azure.com",
                     "api_version": "2024-02-15-preview",
                 },
             }
         },
         "tools": {
             "ai_foundry": {
-                "default_project_endpoint": "${ref:ai_foundry.default_project_endpoint}",
-                "tools": {"opoint": "ai_foundry.tools.opoint_api"},
+                "default_project_endpoint": "https://my-project.azure.ai",
+                "tools": {
+                    "opoint_api": {
+                        "name": "opoint",
+                        "description": "Office Point API tool",
+                        "type": "api",
+                        "connection_ids": ["conn-123"],
+                    }
+                },
             }
         },
         "agents": {
@@ -433,9 +435,9 @@ def demo_reference_resolution() -> None:
                 "name": "Office Agent",
                 "description": "Agent that uses Office Point API",
                 "model": {"name": "gpt-4"},
-                "tools": ["ai_foundry.tools.opoint"],
+                "tools": ["${ref:tools.ai_foundry.tools.opoint_api}"],
                 "platform": "azure_openai",
-                "system_prompt": {  # Added required system_prompt field
+                "system_prompt": {
                     "version": "1.0",
                     "path": "prompts/office-agent.md",
                 },
@@ -446,10 +448,11 @@ def demo_reference_resolution() -> None:
     print("Original config with references:")
     tools_section = config_with_refs.get("tools", {})
     ai_foundry = tools_section.get("ai_foundry", {})
-    opoint_ref = ai_foundry.get("tools", {}).get("opoint", "not found")
-    endpoint_ref = ai_foundry.get("default_project_endpoint", "not found")
-    print(f"  ai_foundry.tools.opoint: {opoint_ref}")
-    print(f"  default_project_endpoint: {endpoint_ref}")
+    tools_dict = ai_foundry.get("tools", {})
+    opoint_config = tools_dict.get("opoint_api", {})
+    endpoint = ai_foundry.get("default_project_endpoint", "not found")
+    print(f"  ai_foundry.tools.opoint_api: {opoint_config.get('name', 'not found')}")
+    print(f"  default_project_endpoint: {endpoint}")
 
     try:
         # Load with reference resolution
@@ -479,6 +482,77 @@ def demo_reference_resolution() -> None:
         traceback.print_exc()
 
 
+def demo_tool_resolution() -> None:
+    """Demonstrate tool resolution functionality."""
+    print("\n" + "=" * 50)
+    print("Demo 7: Tool Resolution")
+    print("=" * 50)
+
+    # Set up environment variables for demo
+    os.environ["AZURE_OPENAI_KEY"] = "demo-key-for-testing"
+    os.environ["AZURE_OPENAI_ENDPOINT"] = "https://demo.openai.azure.com/"
+    os.environ["AZURE_AI_FOUNDRY_PROJECT_ENDPOINT"] = "https://demo.foundry.com/"
+    os.environ["BING_SEARCH_CONNECTION_ID"] = "demo-bing-connection"
+    os.environ["OPOINT_API_CONNECTION_ID"] = "demo-opoint-connection"
+    os.environ["OPENAPI_OPOINT_API_KEY"] = "demo-opoint-key"
+
+    try:
+        # Load configuration
+        config = ConfigLoader.load_from_file("app/ai-config/ai-config.yaml")
+        print(f"✅ Configuration loaded successfully")
+
+        # Demonstrate individual tool resolution
+        print("\n🔧 Individual Tool Resolution:")
+        tool_refs = [
+            "ai_foundry.tools.bing_search",
+            "ai_foundry.tools.opoint_api",
+            "openapi.opoint"
+        ]
+
+        for tool_ref in tool_refs:
+            tool_config = config.get_tool(tool_ref)
+            if tool_config:
+                print(f"   {tool_ref}:")
+                print(f"     Description: {tool_config.description}")
+                print(f"     Type: {getattr(tool_config, 'type', 'N/A')}")
+                if hasattr(tool_config, 'config') and tool_config.config:
+                    print(f"     Config: {tool_config.config}")
+            else:
+                print(f"   {tool_ref}: ❌ Not found")
+
+        # Demonstrate agent tool resolution
+        print("\n🤖 Agent Tool Resolution:")
+        for agent_name in config.list_agents():
+            agent = config.get_agent(agent_name)
+            if agent:
+                print(f"\n   Agent: {agent_name}")
+                print(f"   Tool references: {agent.tools}")
+                
+                # Method 1: Using config.get_agent_tools()
+                resolved_tools = config.get_agent_tools(agent_name)
+                print(f"   Resolved {len(resolved_tools)} tool(s):")
+                
+                for i, tool in enumerate(resolved_tools, 1):
+                    print(f"     Tool {i}: {tool.description}")
+                    print(f"       Type: {getattr(tool, 'type', 'N/A')}")
+                    
+                # Method 2: Using agent.get_resolved_tools()
+                agent_tools = agent.get_resolved_tools()
+                print(f"   Agent method resolved {len(agent_tools)} tool(s)")
+                
+                # Show tool configuration details
+                for tool in resolved_tools:
+                    if hasattr(tool, 'connection_ids'):
+                        print(f"       Connections: {tool.connection_ids}")
+                    if hasattr(tool, 'schema_path') and tool.schema_path:
+                        print(f"       Schema: {tool.schema_path}")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def main() -> None:
     """Main demo function."""
     print("AI Agents Configuration Library Demo")
@@ -495,6 +569,7 @@ def main() -> None:
     demo_configuration_validation()
     demo_environment_substitution()
     demo_reference_resolution()  # New demo
+    demo_tool_resolution()  # New demo for tool resolution
 
     print("\n" + "=" * 50)
     print("Demo completed!")

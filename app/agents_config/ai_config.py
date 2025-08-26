@@ -2,14 +2,14 @@
 Main AI configuration class.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .agent_config import AgentConfig
 from .base import EnvSubstitutionMixin
 from .model_config import ModelConfig
-from .tool_config import ToolsConfig
+from .tool_config import ToolsConfig, OpenAPIToolConfig, AIFoundryToolConfig
 
 
 class AIConfig(BaseModel, EnvSubstitutionMixin):
@@ -69,13 +69,13 @@ class AIConfig(BaseModel, EnvSubstitutionMixin):
                         f"Agent '{agent_name}' references unknown model " f"'{model_name}'. Available models: " f"{sorted(available_models)}"
                     )
 
-            # Check tool references
+            # Check tool references - tools are now objects, so validation is different
             if agent_config.tools:
-                for tool_ref in agent_config.tools:
-                    if tool_ref not in available_tools:
-                        # For now, just warn rather than error for tool
-                        # references as the tool structure is complex
-                        pass
+                for tool in agent_config.tools:
+                    # Tools are now actual configuration objects
+                    # Validation happens during tool object creation
+                    # We can add specific validation here if needed
+                    pass
 
         return self
 
@@ -89,6 +89,52 @@ class AIConfig(BaseModel, EnvSubstitutionMixin):
     def get_agent(self, name: str) -> Optional[AgentConfig]:
         """Get an agent configuration by name."""
         return self.agents.get(name)
+
+    def get_tool(self, tool_ref: str) -> Optional[Union[OpenAPIToolConfig, AIFoundryToolConfig]]:
+        """
+        Get a tool configuration by its reference string.
+        
+        Args:
+            tool_ref: Tool reference string (e.g., "ai_foundry.tools.bing_search", "openapi.weather")
+            
+        Returns:
+            The tool configuration object or None if not found
+        """
+        if not isinstance(tool_ref, str) or "." not in tool_ref:
+            return None
+            
+        parts = tool_ref.split(".")
+        
+        if len(parts) == 2 and parts[0] == "openapi":
+            # OpenAPI tool: "openapi.tool_name"
+            tool_name = parts[1]
+            return self.tools.openapi.get(tool_name) if self.tools.openapi else None
+            
+        elif len(parts) == 3 and parts[0] == "ai_foundry" and parts[1] == "tools":
+            # AI Foundry tool: "ai_foundry.tools.tool_name"
+            tool_name = parts[2]
+            if self.tools.ai_foundry and self.tools.ai_foundry.tools:
+                return self.tools.ai_foundry.tools.get(tool_name)
+            return None
+            
+        return None
+
+    def get_agent_tools(self, agent_name: str) -> List[Union[OpenAPIToolConfig, AIFoundryToolConfig]]:
+        """
+        Get resolved tool configurations for an agent.
+        
+        Args:
+            agent_name: Name of the agent
+            
+        Returns:
+            List of tool configuration objects
+        """
+        agent = self.get_agent(agent_name)
+        if not agent:
+            return []
+            
+        # Tools are now already resolved objects in the agent
+        return agent.tools
 
     def list_models(self) -> List[str]:
         """List all available model names."""

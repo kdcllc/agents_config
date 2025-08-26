@@ -67,6 +67,33 @@ class ReferenceResolutionMixin:
             # Pattern to match ${ref:path.to.value}
             pattern = r"\$\{ref:([^}]+)\}"
 
+            # Check if the entire string is a single reference
+            full_match = re.fullmatch(pattern, value)
+            if full_match:
+                ref_path = full_match.group(1)
+                
+                # Special handling for tool references in agent tools list
+                # If it's a reference to tools.*.tools.*, return the actual tool object
+                if ref_path.startswith("tools.") and ".tools." in ref_path:
+                    # Get the actual tool configuration object
+                    resolved_value = ReferenceResolutionMixin._resolve_path(ref_path, config_dict)
+                    if resolved_value is None:
+                        raise ValueError(f"Tool reference path '{ref_path}' not found in configuration")
+                    
+                    # Recursively resolve references within the tool configuration
+                    # This ensures that references inside the tool config are also resolved
+                    if isinstance(resolved_value, dict):
+                        resolved_value = ReferenceResolutionMixin.resolve_references(resolved_value, config_dict)
+                    
+                    return resolved_value
+                
+                # For non-tool references, resolve to the actual value
+                resolved_value = ReferenceResolutionMixin._resolve_path(ref_path, config_dict)
+                if resolved_value is None:
+                    raise ValueError(f"Reference path '{ref_path}' not found in configuration")
+                return resolved_value
+
+            # For partial references within a string, substitute as string
             def replace_reference(match: re.Match[str]) -> str:
                 ref_path = match.group(1)
                 resolved_value = ReferenceResolutionMixin._resolve_path(ref_path, config_dict)
