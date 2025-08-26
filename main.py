@@ -30,8 +30,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from app.agents_config.ai_config import AIConfig
-from app.agents_config.config_loader import ConfigLoader
+from agents_config.ai_config import AIConfig
+from agents_config.config_loader import ConfigLoader
 
 
 def demo_load_existing_config() -> Optional[AIConfig]:

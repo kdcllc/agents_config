@@ -95,6 +95,7 @@ jobs:
     permissions:
       # IMPORTANT: this permission is mandatory for Trusted Publishing
       id-token: write
+      contents: read
 
     steps:
       - name: Download build artifacts
@@ -105,4 +106,4 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        # No password needed - OIDC trusted publishing handles authentication automatically
+        # OIDC trusted publishing handles authentication automatically

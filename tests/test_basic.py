@@ -2,16 +2,16 @@
 
 import pytest
 
-from app.agents_config.ai_config import AIConfig
-from app.agents_config.config_loader import ConfigLoader
+from agents_config.ai_config import AIConfig
+from agents_config.config_loader import ConfigLoader
 
 
 def test_package_imports() -> None:
     """Test that core modules can be imported."""
-    from app.agents_config import AIConfig, ConfigLoader
-    from app.agents_config.agent_config import AgentConfig
-    from app.agents_config.model_config import ModelConfig
-    from app.agents_config.tool_config import ToolsConfig
+    from agents_config import AIConfig, ConfigLoader
+    from agents_config.agent_config import AgentConfig
+    from agents_config.model_config import ModelConfig
+    from agents_config.tool_config import ToolsConfig
 
     assert AIConfig is not None
     assert ConfigLoader is not None

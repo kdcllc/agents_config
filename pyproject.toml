@@ -1,6 +1,6 @@
 [project]
 name = "agents-config"
-version = "0.1.1"
+version = "0.2.0"
 description = "Robust Pydantic models for AI agent configuration with environment variable substitution"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -41,8 +41,11 @@ dev = [
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.package-dir]
+"" = "app"
+
 [tool.setuptools.packages.find]
-include = ["app"]
+where = ["app"]
 
 [tool.black]
 line-length = 150

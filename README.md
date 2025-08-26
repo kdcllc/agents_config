@@ -41,7 +41,7 @@ uv sync --all-extras
 ### Basic Usage
 
 ```python
-from app.agents_config.config_loader import ConfigLoader
+from agents_config.config_loader import ConfigLoader
 
 # Load configuration from YAML file
 config = ConfigLoader.load_from_file("ai-config.yaml")
@@ -131,7 +131,7 @@ agents:
 The main entry point for loading and validating configurations.
 
 ```python
-from app.agents_config.config_loader import ConfigLoader
+from agents_config.config_loader import ConfigLoader
 
 # Load from YAML file
 config = ConfigLoader.load_from_file("config.yaml")
@@ -254,9 +254,9 @@ tools:
 Create configurations in code for dynamic setups:
 
 ```python
-from app.agents_config.ai_config import AIConfig
-from app.agents_config.model_config import ModelConfig
-from app.agents_config.agent_config import AgentConfig
+from agents_config.ai_config import AIConfig
+from agents_config.model_config import ModelConfig
+from agents_config.agent_config import AgentConfig
 
 # Create model configuration
 model = ModelConfig(
@@ -381,7 +381,7 @@ agents-config/
 ### Custom Tool Integration
 
 ```python
-from app.agents_config.tool_config import ToolsConfig
+from agents_config.tool_config import ToolsConfig
 
 # Define custom tools
 custom_tools = ToolsConfig(
@@ -443,7 +443,7 @@ final_config = merge_configurations(base_config, env_config)
 
 ```python
 import pytest
-from app.agents_config.config_loader import ConfigLoader
+from agents_config.config_loader import ConfigLoader
 
 def test_configuration_loading():
     """Test that configuration loads successfully."""
