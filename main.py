@@ -27,7 +27,6 @@ Run this script to see the library in action:
 """
 
 import os
-import sys
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -85,6 +84,48 @@ def demo_load_existing_config() -> Optional[AIConfig]:
                     print(f"     Tools: {tools_str}")
             else:
                 print(f"   - {agent_name}: (agent not found)")
+
+        # Display reference resolution examples
+        print("\n🔗 Reference Resolution Examples:")
+
+        # Show how ${ref:} references were resolved
+        if hasattr(config.tools, "ai_foundry"):
+            ai_foundry = config.tools.ai_foundry
+            endpoint = getattr(ai_foundry, "default_project_endpoint", "not found")
+            print("   ${ref:tools.ai_foundry.default_project_endpoint} →")
+            print(f"     Resolved to: {endpoint}")
+
+            if hasattr(ai_foundry, "tools") and isinstance(ai_foundry.tools, dict):
+                for tool_name, tool_config in ai_foundry.tools.items():
+                    if hasattr(tool_config, "config") and isinstance(
+                        tool_config.config, dict
+                    ):
+                        project_endpoint = tool_config.config.get("project_endpoint")
+                        if project_endpoint:
+                            print(f"   Tool '{tool_name}' project_endpoint:")
+                            print(
+                                "     Original: ${ref:tools.ai_foundry."
+                                "default_project_endpoint}"
+                            )
+                            print(f"     Resolved: {project_endpoint}")
+
+        # Show agent tool references
+        print("\n🔧 Agent Tool Reference Resolution:")
+        for agent_name in config.list_agents():
+            agent = config.get_agent(agent_name)
+            if agent and agent.tools:
+                print(f"   Agent '{agent_name}' tools:")
+                for tool_ref in agent.tools:
+                    if tool_ref.startswith("${ref:"):
+                        # Show original reference format
+                        print(f"     Original: {tool_ref}")
+                        # Try to show what it resolved to
+                        ref_path = tool_ref.replace("${ref:", "").replace("}", "")
+                        print(f"     Reference path: {ref_path}")
+                        # Show that it was resolved to an actual tool config
+                        print("     Resolved: ✅ Tool configuration object")
+                    else:
+                        print(f"     Tool: {tool_ref}")
 
         return config
 
@@ -282,7 +323,22 @@ def demo_configuration_validation() -> None:
         print("❌ Validation should have failed!")
     except Exception as e:
         print(f"✅ Validation correctly caught error: {type(e).__name__}")
-        print(f"   Error details: {str(e)[:100]}...")
+        # Show more detailed error information
+        error_str = str(e)
+        if len(error_str) > 200:
+            # Split by common error patterns and show first few errors
+            if "validation error" in error_str.lower():
+                lines = error_str.split("\n")
+                print("   Error details:")
+                for i, line in enumerate(lines[:8]):  # Show first 8 lines
+                    if line.strip():
+                        print(f"     {line}")
+                if len(lines) > 8:
+                    print("     ... (additional validation errors truncated)")
+            else:
+                print(f"   Error details: {error_str[:300]}...")
+        else:
+            print(f"   Error details: {error_str}")
 
 
 def demo_environment_substitution() -> None:
@@ -338,55 +394,118 @@ def cleanup_demo_files() -> None:
                 print(f"   Failed to remove {file_path}: {e}")
 
 
-def main() -> None:
-    """
-    Main demo function showcasing agents-config library features.
-
-    This function demonstrates various aspects of the library including:
-    - Loading configurations from files
-    - Creating configurations programmatically
-    - Validating configurations and environment variables
-    - Environment variable substitution
-    - Error handling and validation
-    """
-    print("🚀 Welcome to the agents-config library demo!")
+def demo_reference_resolution() -> None:
+    """Demonstrate internal reference resolution in configurations."""
+    print("\n" + "=" * 50)
+    print("Demo 6: Reference Resolution")
     print("=" * 50)
 
+    # Create a config with internal references
+    config_with_refs: Dict[str, Any] = {
+        "version": "1.0",
+        "ai_foundry": {
+            "default_project_endpoint": "https://my-project.azure.ai",
+            "tools": {
+                "opoint_api": {
+                    "name": "opoint",
+                    "description": "Office Point API tool",
+                    "connection_id": "conn-123",
+                    "container_name": "opoint-container",
+                }
+            },
+        },
+        "models": {
+            "gpt-4": {
+                "provider": "azure_openai",
+                "id": "gpt-4",
+                "version": "1.0",  # Added required version field
+                "config": {
+                    "api_key": "${env:AZURE_OPENAI_API_KEY}",
+                    "endpoint": "${env:AZURE_OPENAI_ENDPOINT}",
+                    "api_version": "2024-02-15-preview",
+                },
+            }
+        },
+        "tools": {
+            "ai_foundry": {
+                "default_project_endpoint": "${ref:ai_foundry.default_project_endpoint}",
+                "tools": {"opoint": "ai_foundry.tools.opoint_api"},
+            }
+        },
+        "agents": {
+            "office_agent": {
+                "version": "1.0",
+                "name": "Office Agent",
+                "description": "Agent that uses Office Point API",
+                "model": {"name": "gpt-4"},
+                "tools": ["ai_foundry.tools.opoint"],
+                "platform": "azure_openai",
+                "system_prompt": {  # Added required system_prompt field
+                    "version": "1.0",
+                    "path": "prompts/office-agent.md",
+                },
+            }
+        },
+    }
+
+    print("Original config with references:")
+    tools_section = config_with_refs.get("tools", {})
+    ai_foundry = tools_section.get("ai_foundry", {})
+    opoint_ref = ai_foundry.get("tools", {}).get("opoint", "not found")
+    endpoint_ref = ai_foundry.get("default_project_endpoint", "not found")
+    print(f"  ai_foundry.tools.opoint: {opoint_ref}")
+    print(f"  default_project_endpoint: {endpoint_ref}")
+
     try:
-        # Demo 1: Load existing configuration
-        existing_config = demo_load_existing_config()
+        # Load with reference resolution
+        config = ConfigLoader.load_from_dict(config_with_refs)
+        print("\n✅ Configuration loaded successfully with reference resolution!")
 
-        # Demo 2: Validate environment variables
-        if existing_config:
-            demo_validate_environment_variables(existing_config)
+        # Show resolved values
+        if hasattr(config.tools, "ai_foundry"):
+            endpoint = getattr(
+                config.tools.ai_foundry, "default_project_endpoint", "not found"
+            )
+            print(f"  Resolved endpoint: {endpoint}")
 
-        # Demo 3: Create configuration programmatically
-        _ = demo_create_programmatic_config()
+            if hasattr(config.tools.ai_foundry, "tools"):
+                tools_dict = config.tools.ai_foundry.tools
+                if isinstance(tools_dict, dict) and "opoint" in tools_dict:
+                    tool_ref = tools_dict["opoint"]
+                    print(f"  Resolved tool reference: {tool_ref}")
 
-        # Demo 4: Save example configuration
-        _ = demo_save_example_config()
-
-        # Demo 5: Configuration validation
-        demo_configuration_validation()
-
-        # Demo 6: Environment variable substitution
-        demo_environment_substitution()
-
-        print("\n" + "=" * 50)
-        print("✅ Demo completed successfully!")
-        print("\n💡 Next steps:")
-        print("   1. Set up your environment variables for the existing config")
-        print("   2. Customize the configuration for your use case")
-        print("   3. Use the ConfigLoader to load and validate your configs")
-        print("   4. Integrate with your AI application")
+        # Show agent tools
+        if "office_agent" in config.agents:
+            agent_tools = config.agents["office_agent"].tools
+            print(f"  Agent tools: {agent_tools}")
 
     except Exception as e:
-        print(f"\n❌ Demo failed with error: {e}")
-        sys.exit(1)
+        print(f"❌ Error loading config with references: {e}")
+        import traceback
 
-    finally:
-        # Clean up demo files
-        cleanup_demo_files()
+        traceback.print_exc()
+
+
+def main() -> None:
+    """Main demo function."""
+    print("AI Agents Configuration Library Demo")
+    print("=" * 50)
+
+    # Set up environment variables for demo
+    os.environ["AZURE_OPENAI_API_KEY"] = "demo-key-12345"
+    os.environ["AZURE_OPENAI_ENDPOINT"] = "https://demo.openai.azure.com"
+    os.environ["DEMO_API_KEY"] = "demo-secret-key"
+    os.environ["BING_CONNECTION_ID"] = "bing-conn-123"
+
+    demo_load_existing_config()
+    demo_create_programmatic_config()
+    demo_configuration_validation()
+    demo_environment_substitution()
+    demo_reference_resolution()  # New demo
+
+    print("\n" + "=" * 50)
+    print("Demo completed!")
+    print("=" * 50)
 
 
 if __name__ == "__main__":

@@ -39,7 +39,7 @@ tools:
         connection_ids:
           - ${env:BING_SEARCH_CONNECTION_ID}
         config:
-            project_endpoint: default_project_endpoint
+            project_endpoint: ${ref:tools.ai_foundry.default_project_endpoint}
         
       opoint_api:
         version: '1.0'
@@ -49,7 +49,7 @@ tools:
         connection_ids:
           - ${env:OPOINT_API_CONNECTION_ID}
         config:
-            project_endpoint: default_project_endpoint
+            project_endpoint: ${ref:tools.ai_foundry.default_project_endpoint}
       
       search:
         version: '1.0'
@@ -58,7 +58,7 @@ tools:
           - ${env:BING_SEARCH_CONNECTION_ID}
           - ${env:OPOINT_API_CONNECTION_ID}
         config:
-            project_endpoint: default_project_endpoint
+            project_endpoint: ${ref:tools.ai_foundry.default_project_endpoint}
 
 # agents configuration
 agents:
@@ -71,7 +71,7 @@ agents:
       name: standard-assistant
       temperature: 0.7
     tools:
-      - ai_foundry.tools.opoint_api
+      - ${ref:tools.ai_foundry.tools.opoint_api}
     platform: azure_openai
     system_prompt:
       version: '1.0'
@@ -85,7 +85,7 @@ agents:
       name: standard-assistant
       temperature: 0.5
     tools:
-      - ai_foundry.tools.bing_search
+      - ${ref:tools.ai_foundry.tools.bing_search}
     platform: azure_openai
     system_prompt:
       version: '1.0'
@@ -99,7 +99,7 @@ agents:
       name: standard-assistant
       temperature: 0.6
     tools:
-      - ai_foundry.tools.search
+      - ${ref:tools.ai_foundry.tools.search}
     platform: azure_openai
     system_prompt:
       version: '1.0'

@@ -10,6 +10,7 @@ import yaml
 from pydantic import ValidationError
 
 from .ai_config import AIConfig
+from .base import EnvSubstitutionMixin, ReferenceResolutionMixin
 
 
 class ConfigLoader:
@@ -18,13 +19,13 @@ class ConfigLoader:
     @staticmethod
     def load_from_file(config_path: str) -> AIConfig:
         """
-        Load configuration from YAML file.
+        Load configuration from YAML file with reference resolution.
 
         Args:
             config_path: Path to the YAML configuration file
 
         Returns:
-            Validated AIConfig instance
+            Validated AIConfig instance with resolved references
 
         Raises:
             FileNotFoundError: If config file doesn't exist
@@ -44,27 +45,43 @@ class ConfigLoader:
         if raw_config is None:
             raise ValueError(f"Configuration file {config_path} is empty")
 
+        # First pass: resolve environment variables
+        config_with_env = EnvSubstitutionMixin.substitute_env_vars(raw_config)
+
+        # Second pass: resolve internal references
+        config_with_refs = ReferenceResolutionMixin.resolve_references(
+            config_with_env, config_with_env
+        )
+
         try:
-            return AIConfig(**raw_config)
+            return AIConfig(**config_with_refs)
         except ValidationError as e:
             raise ValueError(f"Configuration validation failed for {config_path}: {e}")
 
     @staticmethod
     def load_from_dict(config_dict: Dict[str, Any]) -> AIConfig:
         """
-        Load configuration from dictionary.
+        Load configuration from dictionary with reference resolution.
 
         Args:
             config_dict: Configuration as dictionary
 
         Returns:
-            Validated AIConfig instance
+            Validated AIConfig instance with resolved references
 
         Raises:
             ValidationError: If configuration validation fails
         """
+        # First pass: resolve environment variables
+        config_with_env = EnvSubstitutionMixin.substitute_env_vars(config_dict)
+
+        # Second pass: resolve internal references
+        config_with_refs = ReferenceResolutionMixin.resolve_references(
+            config_with_env, config_with_env
+        )
+
         try:
-            return AIConfig(**config_dict)
+            return AIConfig(**config_with_refs)
         except ValidationError as e:
             raise ValueError(f"Configuration validation failed: {e}")
 
