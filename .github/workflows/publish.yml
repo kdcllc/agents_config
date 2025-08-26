@@ -33,13 +33,13 @@ jobs:
       - name: Set up demo environment
         env:
           # Set demo environment variables to prevent errors
-          DEMO_API_KEY: "demo-key-for-testing"
-          AZURE_OPENAI_KEY: "demo-azure-key"
-          AZURE_OPENAI_ENDPOINT: "https://demo.openai.azure.com"
-          AZURE_AI_FOUNDRY_PROJECT_ENDPOINT: "https://demo.ai.azure.com"
-          BING_SEARCH_CONNECTION_ID: "demo-bing-connection"
-          OPOINT_API_CONNECTION_ID: "demo-opoint-connection"
-          OPENAPI_OPOINT_API_KEY: "demo-openapi-key"
+          DEMO_API_KEY: 'demo-key-for-testing'
+          AZURE_OPENAI_KEY: 'demo-azure-key'
+          AZURE_OPENAI_ENDPOINT: 'https://demo.openai.azure.com'
+          AZURE_AI_FOUNDRY_PROJECT_ENDPOINT: 'https://demo.ai.azure.com'
+          BING_SEARCH_CONNECTION_ID: 'demo-bing-connection'
+          OPOINT_API_CONNECTION_ID: 'demo-opoint-connection'
+          OPENAPI_OPOINT_API_KEY: 'demo-openapi-key'
         run: echo "Environment variables set for testing"
 
       - name: Run tests

@@ -33,13 +33,13 @@ jobs:
       - name: Run demo script
         env:
           # Set demo environment variables to prevent errors
-          DEMO_API_KEY: "demo-key-for-testing"
-          AZURE_OPENAI_KEY: "demo-azure-key"
-          AZURE_OPENAI_ENDPOINT: "https://demo.openai.azure.com"
-          AZURE_AI_FOUNDRY_PROJECT_ENDPOINT: "https://demo.ai.azure.com"
-          BING_SEARCH_CONNECTION_ID: "demo-bing-connection"
-          OPOINT_API_CONNECTION_ID: "demo-opoint-connection"
-          OPENAPI_OPOINT_API_KEY: "demo-openapi-key"
+          DEMO_API_KEY: 'demo-key-for-testing'
+          AZURE_OPENAI_KEY: 'demo-azure-key'
+          AZURE_OPENAI_ENDPOINT: 'https://demo.openai.azure.com'
+          AZURE_AI_FOUNDRY_PROJECT_ENDPOINT: 'https://demo.ai.azure.com'
+          BING_SEARCH_CONNECTION_ID: 'demo-bing-connection'
+          OPOINT_API_CONNECTION_ID: 'demo-opoint-connection'
+          OPENAPI_OPOINT_API_KEY: 'demo-openapi-key'
         run: uv run main.py
 
       - name: Run tests
@@ -54,13 +54,13 @@ jobs:
         run: |
           echo "Running black check..."
           uv run black --check .
-          
+
           echo "Running isort check..."
           uv run isort --check-only .
-          
+
           echo "Running flake8..."
           uv run flake8 app/ tests/ || echo "flake8 found issues but continuing..."
-          
+
           echo "Running mypy..."
           uv run mypy app/ || echo "mypy found issues but continuing..."
 

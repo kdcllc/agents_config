@@ -4,12 +4,8 @@ version = "0.1.0"
 description = "Robust Pydantic models for AI agent configuration with environment variable substitution"
 readme = "README.md"
 requires-python = ">=3.12"
-authors = [
-    { name = "kdcllc", email = "info@kingdavidconsulting.com" },
-]
-maintainers = [
-    { name = "kdcllc", email = "info@kingdavidconsulting.com" },
-]
+authors = [{ name = "kdcllc", email = "info@kingdavidconsulting.com" }]
+maintainers = [{ name = "kdcllc", email = "info@kingdavidconsulting.com" }]
 license = "MIT"
 keywords = ["ai", "agents", "configuration", "pydantic", "yaml"]
 classifiers = [
