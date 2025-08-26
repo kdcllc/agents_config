@@ -1,0 +1,43 @@
+{
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": ".github/instructions/commit-message.instructions.md"
+    }
+  ],
+  "github.copilot.chat.codesearch.enabled": true,
+  "chat.agent.maxRequests": 100,
+
+  // Python Configuration - All Python-related settings
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+
+  // Python Global Settings
+  "python.defaultInterpreterPath": "./.venv/bin/python",
+  "python.testing.pytestArgs": ["tests"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+
+  // Pylint (Linter) Configuration - Your default linter
+  "pylint.importStrategy": "fromEnvironment",
+  "pylint.enabled": true,
+  "pylint.args": [
+    "--load-plugins=pylint.extensions.docparams",
+    "--disable=missing-module-docstring,missing-class-docstring,missing-function-docstring"
+  ],
+
+  "rest-client.environmentVariables": {
+    "$shared": {},
+    "local": {
+      "base_url": "http://localhost:8080"
+    },
+    "production": {
+      "base_url": "https://api.example.com"
+    }
+  },
+
+}

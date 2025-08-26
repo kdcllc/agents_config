@@ -1,0 +1,14 @@
+include README.md
+include LICENSE
+include pyproject.toml
+recursive-include app *.py
+recursive-include app/ai-config *.yaml *.yml *.json *.md
+recursive-exclude app __pycache__
+recursive-exclude app *.py[co]
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *~
+global-exclude .git*
+global-exclude .DS_Store
+global-exclude *.so
+global-exclude *.dylib
