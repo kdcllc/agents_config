@@ -28,10 +28,10 @@ Run this script to see the library in action:
 
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-from app.agents_config.config_loader import ConfigLoader
 from app.agents_config.ai_config import AIConfig
+from app.agents_config.config_loader import ConfigLoader
 
 
 def demo_load_existing_config() -> Optional[AIConfig]:
@@ -97,16 +97,11 @@ def demo_load_existing_config() -> Optional[AIConfig]:
 
             if hasattr(ai_foundry, "tools") and isinstance(ai_foundry.tools, dict):
                 for tool_name, tool_config in ai_foundry.tools.items():
-                    if hasattr(tool_config, "config") and isinstance(
-                        tool_config.config, dict
-                    ):
+                    if hasattr(tool_config, "config") and isinstance(tool_config.config, dict):
                         project_endpoint = tool_config.config.get("project_endpoint")
                         if project_endpoint:
                             print(f"   Tool '{tool_name}' project_endpoint:")
-                            print(
-                                "     Original: ${ref:tools.ai_foundry."
-                                "default_project_endpoint}"
-                            )
+                            print("     Original: ${ref:tools.ai_foundry." "default_project_endpoint}")
                             print(f"     Resolved: {project_endpoint}")
 
         # Show agent tool references
@@ -463,9 +458,7 @@ def demo_reference_resolution() -> None:
 
         # Show resolved values
         if hasattr(config.tools, "ai_foundry"):
-            endpoint = getattr(
-                config.tools.ai_foundry, "default_project_endpoint", "not found"
-            )
+            endpoint = getattr(config.tools.ai_foundry, "default_project_endpoint", "not found")
             print(f"  Resolved endpoint: {endpoint}")
 
             if hasattr(config.tools.ai_foundry, "tools"):

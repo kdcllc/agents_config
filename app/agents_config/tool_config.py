@@ -59,18 +59,10 @@ class AIFoundryToolConfig(BaseModel, EnvSubstitutionMixin):
     description: Optional[str] = Field(None, description="Tool description")
     version: Optional[str] = Field(None, description="Tool version")
     type: Optional[str] = Field(None, description="Tool type (e.g., bing, openapi)")
-    schema_path: Optional[str] = Field(
-        None, description="Path to schema file for openapi tools"
-    )
-    container_name: Optional[str] = Field(
-        None, description="Container name for the tool"
-    )
-    connection_ids: Union[List[str], Dict[str, str]] = Field(
-        default_factory=lambda: [], description="Connection IDs (list or dict)"
-    )
-    config: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Additional configuration"
-    )
+    schema_path: Optional[str] = Field(None, description="Path to schema file for openapi tools")
+    container_name: Optional[str] = Field(None, description="Container name for the tool")
+    connection_ids: Union[List[str], Dict[str, str]] = Field(default_factory=lambda: [], description="Connection IDs (list or dict)")
+    config: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional configuration")
 
     @model_validator(mode="before")
     @classmethod
@@ -96,18 +88,13 @@ class AIFoundryToolConfig(BaseModel, EnvSubstitutionMixin):
                 self.connection_ids = {"default": self.connection_ids[0]}
             else:
                 # Multiple connections, use index-based keys
-                self.connection_ids = {
-                    f"connection_{i}": conn_id
-                    for i, conn_id in enumerate(self.connection_ids)
-                }
+                self.connection_ids = {f"connection_{i}": conn_id for i, conn_id in enumerate(self.connection_ids)}
 
         return self
 
     @field_validator("connection_ids", mode="before")
     @classmethod
-    def validate_connection_ids_input(
-        cls, v: Union[List[str], Dict[str, str]]
-    ) -> Union[List[str], Dict[str, str]]:
+    def validate_connection_ids_input(cls, v: Union[List[str], Dict[str, str]]) -> Union[List[str], Dict[str, str]]:
         """Validate connection IDs input format."""
         if isinstance(v, list):
             for item in v:
@@ -125,12 +112,8 @@ class AIFoundryToolConfig(BaseModel, EnvSubstitutionMixin):
 class AIFoundryToolsConfig(BaseModel, EnvSubstitutionMixin):
     """Configuration for AI Foundry tools collection."""
 
-    default_project_endpoint: Optional[str] = Field(
-        None, description="Default project endpoint for AI Foundry"
-    )
-    tools: Dict[str, AIFoundryToolConfig] = Field(
-        default_factory=dict, description="AI Foundry tools"
-    )
+    default_project_endpoint: Optional[str] = Field(None, description="Default project endpoint for AI Foundry")
+    tools: Dict[str, AIFoundryToolConfig] = Field(default_factory=dict, description="AI Foundry tools")
 
     @model_validator(mode="before")
     @classmethod
@@ -142,13 +125,9 @@ class AIFoundryToolsConfig(BaseModel, EnvSubstitutionMixin):
 class ToolsConfig(BaseModel, EnvSubstitutionMixin):
     """Main tools configuration."""
 
-    openapi: Dict[str, OpenAPIToolConfig] = Field(
-        default_factory=dict, description="OpenAPI tools"
-    )
+    openapi: Dict[str, OpenAPIToolConfig] = Field(default_factory=dict, description="OpenAPI tools")
     ai_foundry: AIFoundryToolsConfig = Field(
-        default_factory=lambda: AIFoundryToolsConfig(
-            default_project_endpoint=None, tools={}
-        ),
+        default_factory=lambda: AIFoundryToolsConfig(default_project_endpoint=None, tools={}),
         description="AI Foundry tools",
     )
 

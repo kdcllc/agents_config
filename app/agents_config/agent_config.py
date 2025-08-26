@@ -35,9 +35,7 @@ class AgentModelConfig(BaseModel, EnvSubstitutionMixin):
     """Configuration for agent model settings."""
 
     name: str = Field(..., description="Model name reference")
-    temperature: Optional[PositiveFloat] = Field(
-        None, description="Override temperature"
-    )
+    temperature: Optional[PositiveFloat] = Field(None, description="Override temperature")
     max_tokens: Optional[PositiveInt] = Field(None, description="Override max tokens")
     top_p: Optional[PositiveFloat] = Field(None, description="Override top_p")
 
@@ -71,13 +69,9 @@ class AgentConfig(BaseModel, EnvSubstitutionMixin):
     name: str = Field(..., description="Agent name")
     description: str = Field(..., description="Agent description")
     model: AgentModelConfig = Field(..., description="Model configuration")
-    tools: List[str] = Field(
-        default_factory=list, description="List of tool references"
-    )
+    tools: List[str] = Field(default_factory=list, description="List of tool references")
     platform: str = Field(..., description="Platform (e.g., azure_openai)")
-    system_prompt: SystemPromptConfig = Field(
-        ..., description="System prompt configuration"
-    )
+    system_prompt: SystemPromptConfig = Field(..., description="System prompt configuration")
 
     @model_validator(mode="before")
     @classmethod
@@ -94,8 +88,5 @@ class AgentConfig(BaseModel, EnvSubstitutionMixin):
                 raise ValueError("Tool references must be strings")
             # Validate tool reference format (e.g., "ai_foundry.tools.bing")
             if "." not in tool:
-                raise ValueError(
-                    f"Tool reference '{tool}' must be in format "
-                    "'category.subcategory.name'"
-                )
+                raise ValueError(f"Tool reference '{tool}' must be in format " "'category.subcategory.name'")
         return v

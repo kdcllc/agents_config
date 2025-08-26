@@ -12,14 +12,10 @@ from .base import EnvSubstitutionMixin
 class ModelConfig(BaseModel, EnvSubstitutionMixin):
     """Configuration for AI models."""
 
-    provider: str = Field(
-        ..., description="Model provider (e.g., azure_openai, openai)"
-    )
+    provider: str = Field(..., description="Model provider (e.g., azure_openai, openai)")
     id: str = Field(..., description="Model identifier")
     version: str = Field(..., description="Model version")
-    config: Dict[str, Any] = Field(
-        default_factory=dict, description="Provider-specific configuration"
-    )
+    config: Dict[str, Any] = Field(default_factory=dict, description="Provider-specific configuration")
     params: Dict[str, Any] = Field(default_factory=dict, description="Model parameters")
 
     @model_validator(mode="before")

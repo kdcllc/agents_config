@@ -49,9 +49,7 @@ class ConfigLoader:
         config_with_env = EnvSubstitutionMixin.substitute_env_vars(raw_config)
 
         # Second pass: resolve internal references
-        config_with_refs = ReferenceResolutionMixin.resolve_references(
-            config_with_env, config_with_env
-        )
+        config_with_refs = ReferenceResolutionMixin.resolve_references(config_with_env, config_with_env)
 
         try:
             return AIConfig(**config_with_refs)
@@ -76,9 +74,7 @@ class ConfigLoader:
         config_with_env = EnvSubstitutionMixin.substitute_env_vars(config_dict)
 
         # Second pass: resolve internal references
-        config_with_refs = ReferenceResolutionMixin.resolve_references(
-            config_with_env, config_with_env
-        )
+        config_with_refs = ReferenceResolutionMixin.resolve_references(config_with_env, config_with_env)
 
         try:
             return AIConfig(**config_with_refs)
@@ -226,6 +222,4 @@ class ConfigLoader:
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
         with open(output_file, "w", encoding="utf-8") as f:
-            yaml.dump(
-                example_config, f, default_flow_style=False, sort_keys=False, indent=2
-            )
+            yaml.dump(example_config, f, default_flow_style=False, sort_keys=False, indent=2)

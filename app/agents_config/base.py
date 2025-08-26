@@ -37,9 +37,7 @@ class EnvSubstitutionMixin:
 
             return re.sub(pattern, replace_env_var, value)
         elif isinstance(value, dict):
-            return {
-                k: EnvSubstitutionMixin.substitute_env_vars(v) for k, v in value.items()
-            }
+            return {k: EnvSubstitutionMixin.substitute_env_vars(v) for k, v in value.items()}
         elif isinstance(value, list):
             return [EnvSubstitutionMixin.substitute_env_vars(item) for item in value]
         else:
@@ -71,13 +69,9 @@ class ReferenceResolutionMixin:
 
             def replace_reference(match: re.Match[str]) -> str:
                 ref_path = match.group(1)
-                resolved_value = ReferenceResolutionMixin._resolve_path(
-                    ref_path, config_dict
-                )
+                resolved_value = ReferenceResolutionMixin._resolve_path(ref_path, config_dict)
                 if resolved_value is None:
-                    raise ValueError(
-                        f"Reference path '{ref_path}' not found in configuration"
-                    )
+                    raise ValueError(f"Reference path '{ref_path}' not found in configuration")
                 return str(resolved_value)
 
             # Also handle simple references without ${ref:} wrapper
@@ -88,9 +82,7 @@ class ReferenceResolutionMixin:
             # Handle dot notation references like "ai_foundry.tools.opoint_api"
             if "." in value and not value.startswith("${"):
                 try:
-                    resolved = ReferenceResolutionMixin._resolve_path(
-                        value, config_dict
-                    )
+                    resolved = ReferenceResolutionMixin._resolve_path(value, config_dict)
                     if resolved is not None:
                         return resolved
                 except (KeyError, TypeError):
@@ -98,15 +90,9 @@ class ReferenceResolutionMixin:
 
             return re.sub(pattern, replace_reference, value)
         elif isinstance(value, dict):
-            return {
-                k: ReferenceResolutionMixin.resolve_references(v, config_dict)
-                for k, v in value.items()
-            }
+            return {k: ReferenceResolutionMixin.resolve_references(v, config_dict) for k, v in value.items()}
         elif isinstance(value, list):
-            return [
-                ReferenceResolutionMixin.resolve_references(item, config_dict)
-                for item in value
-            ]
+            return [ReferenceResolutionMixin.resolve_references(item, config_dict) for item in value]
         else:
             return value
 

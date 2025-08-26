@@ -6,25 +6,19 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from .agent_config import AgentConfig
 from .base import EnvSubstitutionMixin
 from .model_config import ModelConfig
 from .tool_config import ToolsConfig
-from .agent_config import AgentConfig
 
 
 class AIConfig(BaseModel, EnvSubstitutionMixin):
     """Main configuration class for AI system."""
 
     version: str = Field(..., description="Configuration version")
-    models: Dict[str, ModelConfig] = Field(
-        default_factory=dict, description="Model configurations"
-    )
-    tools: ToolsConfig = Field(
-        default_factory=ToolsConfig, description="Tools configuration"
-    )
-    agents: Dict[str, AgentConfig] = Field(
-        default_factory=dict, description="Agent configurations"
-    )
+    models: Dict[str, ModelConfig] = Field(default_factory=dict, description="Model configurations")
+    tools: ToolsConfig = Field(default_factory=ToolsConfig, description="Tools configuration")
+    agents: Dict[str, AgentConfig] = Field(default_factory=dict, description="Agent configurations")
 
     @model_validator(mode="before")
     @classmethod
@@ -72,9 +66,7 @@ class AIConfig(BaseModel, EnvSubstitutionMixin):
                 model_name = agent_config.model.name
                 if model_name not in available_models:
                     raise ValueError(
-                        f"Agent '{agent_name}' references unknown model "
-                        f"'{model_name}'. Available models: "
-                        f"{sorted(available_models)}"
+                        f"Agent '{agent_name}' references unknown model " f"'{model_name}'. Available models: " f"{sorted(available_models)}"
                     )
 
             # Check tool references
