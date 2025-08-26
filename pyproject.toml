@@ -1,6 +1,6 @@
 [project]
 name = "agents-config"
-version = "0.1.0"
+version = "0.1.1"
 description = "Robust Pydantic models for AI agent configuration with environment variable substitution"
 readme = "README.md"
 requires-python = ">=3.12"
